@@ -1,2 +1,5 @@
 # GPT-J-hf
-GPT-jax based on the official huggingface library
+GPT-jax example based on the official huggingface library
+
+Command:
+
