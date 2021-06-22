@@ -8,5 +8,5 @@ python3 generation_example.py \
     --max_length 800 \
     --top_p 0.95 \
     --download_dir ./ \
-    --seed 123 \
+    --seed 234 \
     --fp16 |& tee sample.txt
