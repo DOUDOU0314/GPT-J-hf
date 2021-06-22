@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -ex
+
 python3 generation_example.py \
     --output_dir ./ \
     --input 'Why AutoGluon is great?' \
@@ -8,4 +10,3 @@ python3 generation_example.py \
     --download_dir ./ \
     --seed 123 \
     --fp16
-    
