@@ -111,7 +111,8 @@ def main():
     parser = argparse.ArgumentParser()
     add_parser(parser)
     args = parser.parse_args()
-    set_seed(args.seed)
+    if args.seed is not None:
+        set_seed(args.seed)
 
     urls = {
         'config.json': {
