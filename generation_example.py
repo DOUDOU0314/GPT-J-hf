@@ -1,6 +1,7 @@
 import time
 import torch
 from transformers import GPT2Tokenizer
+from transformers.trainer_utils import set_seed
 from modeling_gpt_neo import GPTNeoForCausalLM
 import os
 import logging
@@ -102,12 +103,15 @@ def add_parser(parser: argparse.ArgumentParser):
                         help='Destination path to store downloaded file, default in current dir')
     parser.add_argument('--fp16', action='store_true',
                         help='whether use fp16')
+    parser.add_argument('--seed', type=int, default=None,
+                        help='The seed for generating the samples.')
 
 
 def main():
     parser = argparse.ArgumentParser()
     add_parser(parser)
     args = parser.parse_args()
+    set_seed(args.seed)
 
     urls = {
         'config.json': {
