@@ -1,9 +1,8 @@
 import time
 import torch
 from transformers import GPT2Tokenizer
+from transformers.trainer_utils import set_seed
 from modeling_gpt_neo import GPTNeoForCausalLM
-
-import collections
 import os
 import logging
 import hashlib
@@ -12,13 +11,13 @@ from tqdm import tqdm
 import argparse
 
 
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 if (logger.hasHandlers()):
     logger.handlers.clear()
 console = logging.StreamHandler()
 logger.addHandler(console)
+
 
 def download_ops(url, fname):
     dirname = os.path.dirname(os.path.abspath(os.path.expanduser(fname)))
@@ -76,6 +75,7 @@ def download(url, path=None, overwrite=False, sha1_hash=None):
                                     'Please retry.'.format(fname))
     return fname
 
+
 def check_sha1(filename, sha1_hash):
     """Check whether the sha1 hash of the file content matches the expected hash.
     """
@@ -90,34 +90,12 @@ def check_sha1(filename, sha1_hash):
     return sha1.hexdigest() == sha1_hash
 
 
-class Checkpoint(collections.MutableMapping):
-    def __init__(self):
-        self.checkpoint = torch.load("./gpt-j-hf/pytorch_model.bin")
-        print("Loaded")
-    def __len__(self):
-        return len(self.checkpoint)
-    def __getitem__(self, key):
-        return torch.load(self.checkpoint[key])
-    def __setitem__(self, key, value):
-        return
-    def __delitem__(self, key, value):
-        return
-    def keys(self):
-        return self.checkpoint.keys()
-    def __iter__(self):
-        for key in self.checkpoint:
-            yield (key, self.__getitem__(key))
-    def __copy__(self):
-        return self.__dict__
-    def copy(self):
-        return self.__dict__
-
 def add_parser(parser: argparse.ArgumentParser):
     parser.add_argument('--output_dir', type=str, default='./',
                         help='output dir')
     parser.add_argument('--input', type=str, default='Why AutoGluon is great?',
                         help='input text')
-    parser.add_argument('--max_length', type=int, default=100,
+    parser.add_argument('--max_length', type=int, default=800,
                         help='max length of generation example')
     parser.add_argument('--top_p', type=float, default=0.7,
                         help='top-p value of output')
@@ -125,36 +103,33 @@ def add_parser(parser: argparse.ArgumentParser):
                         help='Destination path to store downloaded file, default in current dir')
     parser.add_argument('--fp16', action='store_true',
                         help='whether use fp16')
-
+    parser.add_argument('--seed', type=int, default=None,
+                        help='The seed for generating the samples.')
 
 
 def main():
     parser = argparse.ArgumentParser()
     add_parser(parser)
     args = parser.parse_args()
+    if args.seed is not None:
+        set_seed(args.seed)
 
     urls = {
-        'config.json':{
-            'url':'https://zhisu-nlp.s3.us-west-2.amazonaws.com/gpt-j-hf/config.json', 
+        'config.json': {
+            'url': 'https://zhisu-nlp.s3.us-west-2.amazonaws.com/gpt-j-hf/config.json',
             'sha1sum': 'a0af27bcff3c0fa17ec9718ffb6060b8db5e54e4'
         },
-        'pytorch_model.bin':{
-            'url':'https://zhisu-nlp.s3.us-west-2.amazonaws.com/gpt-j-hf/pytorch_model.bin',
-            'sha1sum':'bab870fc9b82f0bfb3f6cbf4bd6bec3f3add05a6'
+        'pytorch_model.bin': {
+            'url': 'https://zhisu-nlp.s3.us-west-2.amazonaws.com/gpt-j-hf/pytorch_model.bin',
+            'sha1sum': 'bab870fc9b82f0bfb3f6cbf4bd6bec3f3add05a6'
         }
     }
 
-    
     for file_name, info in urls.items():
-        download(info['url'],args.download_dir,sha1_hash=info['sha1sum'])
+        download(info['url'], args.download_dir, sha1_hash=info['sha1sum'])
 
     logger.info("***download finished***")
     logger.info("***loading model***")
-    # config = './gpt-j-hf/config.json'
-
-    # model = GPTNeoForCausalLM.from_pretrained(pretrained_model_name_or_path=None, config=config, state_dict=Checkpoint())
-    # logger.info("ok")
-    # model.eval()
 
     model = GPTNeoForCausalLM.from_pretrained("./gpt-j-hf")
     logger.info("***loading finished***")
@@ -171,7 +146,7 @@ def main():
     output = model.generate(
         input_ids,
         do_sample=True,
-        max_length=800,
+        max_length=args.max_length,
         top_p=args.top_p,
         top_k=0,
         temperature=1.0,
