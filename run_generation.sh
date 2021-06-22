@@ -9,4 +9,4 @@ python3 generation_example.py \
     --top_p 0.95 \
     --download_dir ./ \
     --seed 234 \
-    --fp16 |& tee sample.txt
+    --fp16 | tee sample.txt
